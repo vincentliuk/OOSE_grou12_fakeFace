@@ -3,3 +3,4 @@ Group member:
 Daguang Xu 	dxu5@jhu.edu
 Jianqiao Feng   jfeng10@jhu.edu
 Kai Liu		kliu27@jhu.edu
+hello this is Kai
