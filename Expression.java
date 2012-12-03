@@ -1,8 +1,10 @@
 package com.group12.oose.fakeface;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
+import android.graphics.Bitmap;
 import android.util.Log;
 /**
  * This class stores distortion parameter, distorted face and implements face distortion.
@@ -57,93 +59,103 @@ public class Expression {
      * expression ID for storage
      */
     private int						expressionId; 
+    /**
+     * face image in bitmap format for storage
+     */
+    private Bitmap					faceImageBitmap;
     
-    public Expression(int aUserId,int aExpressionId){
-    	/**
-    	 * @param aUserId,aExpressionId
-    	 */
+    /**
+	 * @param aUserId,aExpressionId
+	 */
+    public Expression(int aUserId,int aExpressionId){    	
     	//faceImageRgbMat = new Mat();
     	userId = aUserId;
     	expressionId = aExpressionId;
     	//faceImageGrayMat = new Mat();
     }
-    public void setUserId(int aUserId){
-    	/**
-    	 * setUserId
-    	 */
+    /**
+     * setUserId
+     */
+    public void setUserId(int aUserId){    	
     	userId = aUserId;
     }
+    /**
+     * @return current userId
+     */
     public int getUserId(){
-    	/**
-    	 * @return current userId
-    	 */
-    	return userId;
+       	return userId;
     }
-    public void setExpressionId(int aExpressionId){
-    	/**
-    	 * setExpressionId
-    	 */
+    /**
+     * setExpressionId
+     */
+    public void setExpressionId(int aExpressionId){    	
     	expressionId = aExpressionId;
     }
-    public int getExpressionId(){
-    	/**
-    	 * @return expression Id
-    	 */
+    /**
+     * @return expression Id
+     */
+    public int getExpressionId(){    	
     	return expressionId;
     }
-    public void setFaceImage(Mat aFaceMat){
-    	/**
-    	 * set face image, this face image will be overwritten when face distortion is implemented.
-    	 */
+    /**
+     * set face image, this face image will be overwritten when face distortion is implemented.
+     */
+    public void setFaceImage(Mat aFaceMat){    	
     	//faceImageRgbMat = aFaceMat.clone();//whether here it should be aFaceMat.clone()???????
     	aFaceMat.copyTo(faceImageRgbMat);
         Imgproc.cvtColor(aFaceMat, faceImageGrayMat, Imgproc.COLOR_RGBA2GRAY);
     }
+    /**
+     * a header to the face submatrix is the input. 
+     * This method is used for face distortion.
+     */
     public void setFaceImageFromSubmat(Mat aFaceMat){
-    	/**
-    	 * a header to the face submatrix is the input. 
-    	 * This method is used for face distortion.
-    	 */
+    	
     	faceImageRgbForDistortion = aFaceMat;
     }
+    /**
+     * @return current distorted face image
+     */
     public Mat getFaceImage(){
-    	/**
-    	 * @return current distorted face image
-    	 */
+    	
     	return faceImageRgbMat;
     }
+    /**
+     * set distortion parameter, larger parameter for bigger distortion, smaller parameter for smaller distortion
+     * The distortion parameter must be in the interval [0,1];
+     */
     public void setDistortionParameter(float aDistortionPara){
-    	/**
-    	 * set distortion parameter, larger parameter for bigger distortion, smaller parameter for smaller distortion
-    	 * The distortion parameter must be in the interval [0,1];
-    	 */
+    	
     	distortionFactor = aDistortionPara/10.0f;
     }
+    /**
+     * @return current distortion parameter
+     */
     public float getDistortionParameter(){
-    	/**
-    	 * @return current distortion parameter
-    	 */
+    	
     	return distortionFactor;
     }
+    /**
+     * Apply distortion to the face which the "faceImageRgbForDistortion" is pointed to.
+     * mouth corners are detected through Sobel edge detection. 
+     * Eye corners are predefined since it is difficult to detect the corner accurately.
+     * The distorted face is cloned and stored in "faceImageRgbMat".
+     */
     public void applyDistortion(){
-    	/**
-    	 * Apply distortion to the face which the "faceImageRgbForDistortion" is pointed to.
-    	 * mouth corners are detected through Sobel edge detection. 
-    	 * Eye corners are predefined since it is difficult to detect the corner accurately.
-    	 * The distorted face is cloned and stored in "faceImageRgbMat".
-    	 */
+    	
     	mouthCornerDetection();
     	Mat faceRef = faceImageRgbForDistortion.clone();
     	mouthDistortionSobel(faceRef);
     	eyeDistortion(faceRef);
     	faceImageRgbMat = faceImageRgbForDistortion.clone(); 
     }
+    /**
+     * Sobel edge detection for mouth corner detection.
+     * It is applied to part of the face for speed and accuracy consideration.
+     * @return a binary int array in which 1 stands for edge. 
+     */
     private int[][] sobelEdgeDetection(){
-    	/**
-    	 * Sobel edge detection for mouth corner detection.
-    	 * It is applied to part of the face for speed and accuracy consideration.
-    	 * @return a binary int array in which 1 stands for edge. 
-    	 */
+    	
     	Mat faceSubmatrixGray = new Mat();
     	Imgproc.cvtColor(faceImageRgbForDistortion, faceSubmatrixGray, Imgproc.COLOR_RGBA2GRAY);//convert to gray color image which is easy to use
     	double gradx = 0,grady=0,gradtotal =0; 
@@ -160,11 +172,12 @@ public class Expression {
     	}    	
     	return edgeMat;
     }
+    /**
+     * mouth corner detection.
+     * The search is in an area where the mouth corner locates with high probability. 
+     */
     private void mouthCornerDetection(){
-    	/**
-    	 * mouth corner detection.
-    	 * The search is in an area where the mouth corner locates with high probability. 
-    	 */
+    	
     	//Mat edgeMat = mRgba.clone();
     	int[][] edgeMat = sobelEdgeDetection();    	
     	//Mouth corner point detection
@@ -195,15 +208,16 @@ public class Expression {
     		}
     	}
     }
+    /**
+     * mouth distortion with mouth corner detected by sobel edge detection.
+     * The destination of mouth corner is computed first according to mouth corner and distortion parameter.
+     * Then the mouth area and area around mouth in the distorted face are filled regarding to its distance to the destination of mouth corner. 
+     * The area around destination of mouth receives largest distortion while area further receives smaller distortion. 
+     * The attenuation is according to Gaussian distribution.
+     * BTW, it is assumed that the mouth is symmetricly located in the detected face. 
+     */
     private void mouthDistortionSobel(Mat refFace){
-    	/**
-    	 * mouth distortion with mouth corner detected by sobel edge detection.
-    	 * The destination of mouth corner is computed first according to mouth corner and distortion parameter.
-    	 * Then the mouth area and area around mouth in the distorted face are filled regarding to its distance to the destination of mouth corner. 
-    	 * The area around destination of mouth receives largest distortion while area further receives smaller distortion. 
-    	 * The attenuation is according to Gaussian distribution.
-    	 * BTW, it is assumed that the mouth is symmetricly located in the detected face. 
-    	 */
+    	
     	Log.v(TAG, "refFace"+refFace.channels()+" "+refFace.depth()+" "+refFace.elemSize()+" "+refFace.type());
     	//Destination of mouth corner computed
     	int mouthDestLeftX = mouthOriginalLeftX-(int)(faceImageRgbForDistortion.cols()*distortionFactor*0.5);
@@ -238,12 +252,13 @@ public class Expression {
         	}
         }
     }
+    /**
+     * mouth distortion with mouth corner predefined.
+     * Because accuracy of sobel edge detection is sensitive to the sobel parameter, light, face characters etc.
+     * very similar to mouthDistortionSobel
+     */
     private void mouthDistortion(Mat refFace){
-    	/**
-    	 * mouth distortion with mouth corner predefined.
-    	 * Because accuracy of sobel edge detection is sensitive to the sobel parameter, light, face characters etc.
-    	 * very similar to mouthDistortionSobel
-    	 */
+    	
     	Log.v(TAG, "refFace"+refFace.channels()+" "+refFace.depth()+" "+refFace.elemSize()+" "+refFace.type());
     	mouthOriginalLeftX = (int)(0.31*faceImageRgbForDistortion.width());
         mouthOriginalLeftY = (int)(0.75*faceImageRgbForDistortion.height());
@@ -282,19 +297,21 @@ public class Expression {
         	}
         }
     }
+    /** 
+     * Gaussian distortion used for attenuation of mouth distortion 
+     */
     private double computeDistCoefMouth(int dx,int dy){
-    	/** 
-    	 * Gaussian distortion used for attenuation of mouth distortion 
-    	 */
+    	
     	double sigma = faceImageRgbForDistortion.height()*0.1;//20.0;
     	double r = Math.pow(dx, 2.0)+Math.pow(dy, 2.0);
     	return Math.exp(-1.0*r/2.0/Math.pow(sigma, 2.0));
     }
+    /**
+     * Eye distortion, the left corner of left eye and right corner of right eye are predefined.
+     * Due to complex environment around eye, it is difficult to detect the eye accurately. 
+     */
     private void eyeDistortion(Mat refFace){
-    	/**
-    	 * Eye distortion, the left corner of left eye and right corner of right eye are predefined.
-    	 * Due to complex environment around eye, it is difficult to detect the eye accurately. 
-    	 */
+    	
     	Log.v(TAG, "refFace"+refFace.channels()+" "+refFace.depth()+" "+refFace.elemSize()+" "+refFace.type());
     	int oriX,oriY;
     	int leftEyeOriginalX = (int)(0.21*faceImageRgbForDistortion.cols());
@@ -330,12 +347,38 @@ public class Expression {
         	}
         }
     }
+    /** 
+     * Gaussian distortion used for attenuation of eye distortion 
+     */
     private double computeDistCoefEye(int dx,int dy){
-    	/** 
-    	 * Gaussian distortion used for attenuation of eye distortion 
-    	 */
+    	
     	double sigma = 5.0;
     	double r = Math.pow(dx, 2.0)+Math.pow(dy, 2.0);
     	return Math.exp(-1.0*r/2.0/Math.pow(sigma, 2.0));
     }
+    /**
+     * @return face image in bitmap format
+     */
+    public Bitmap getFaceImageBitmap() {
+    	
+    	mat2Bitmap();
+		return faceImageBitmap;
+	}
+    /**
+	 * set face image in Bitmap
+	 */
+	public void setFaceImageBitmap(Bitmap faceImagebitmap) {
+		
+		this.faceImageBitmap = faceImagebitmap;
+	}
+	/**
+	 * convert mat to bitmap
+	 */
+	public void mat2Bitmap(){
+		
+		if(faceImageRgbMat==null)
+			return;
+		faceImageBitmap = Bitmap.createBitmap(faceImageRgbMat.cols(), faceImageRgbMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(faceImageRgbMat, faceImageBitmap);	
+	}
 }
