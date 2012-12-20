@@ -81,7 +81,6 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 
 	private static final String TAG = "OOSE::Activity";
 	private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
-	
 	public static final int JAVA_DETECTOR = 0;
 	public static final int NATIVE_DETECTOR = 1;
 
@@ -91,14 +90,12 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	private MenuItem mItemFace30;
 	private MenuItem mItemFace20;
 	private MenuItem mItemType;
-    
 	/**
 	 * real-time screen image retrieval in OpenCv data structure Mat.
 	 * colored mRgba and Grayed mGray
 	 */
 	private Mat mRgba;
 	private Mat mGray;
-	
 	private File mCascadeFile;
 	private CascadeClassifier mJavaDetector;
 	private DetectionBasedTracker mNativeDetector;
@@ -108,12 +105,10 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 
 	private float mRelativeFaceSize = 0.2f;
 	private int mAbsoluteFaceSize = 0;
-
 	/**
 	 * The major CameraView declaration.
 	 */
 	private CameraBridgeViewBase mOpenCvCameraView;
-
 	/**
 	 * build an Expression class object currentExpression for
 	 * the real-time manipulation of expression.
@@ -137,25 +132,21 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	private DBUtil databaseUtil;
 	private User currentUser;
 	private ArrayList<User> allUsers;
-	
 	/**
 	 * All UI buttons declaration.
 	 */
 	private ArrayList<ImageButton> userButtons;
 	private ArrayList<ImageButton> expressionButtons;
-	private ImageButton snapShot;
-	private ImageButton customer1ImageButton;
-	private ImageButton customer2ImageButton;
 	private ImageButton customer3ImageButton;
-	private ImageButton addNewUserImageButton;
-	private ImageButton distortion1ImageButton;
-	private ImageButton distortion2ImageButton;
-	
-	/**
+	private ImageButton customer1ImageButton;
+
+	private TextView galleryText;
+    private TextView distortionText;
+    
+    /**
 	 *  temp boolean mark for taking photo for new user.
 	 */
 	private boolean getPhoto;
-
 	/** 
 	 * load openCV library
 	 */
@@ -198,7 +189,6 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 					mNativeDetector = new DetectionBasedTracker(
 							mCascadeFile.getAbsolutePath(), 0);
 
-					
 					cascadeDir.delete();
 
 				} catch (IOException e) {
@@ -237,21 +227,30 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		
-        //Load main xml file 
+
 		setContentView(R.layout.face_detect_surface_view);
-        
-		//Distortion bar statement and add its listener
+		
+		galleryText = (TextView)findViewById(R.id.gallery1);
+		String str1 = "User candidates";
+		galleryText.setText(str1);
+		galleryText.setTextColor(android.graphics.Color.WHITE);
+		     
+		distortionText = (TextView)findViewById(R.id.distortion);
+		String str2 = "Distorted expression";
+		distortionText.setText(str2);
+		distortionText.setTextColor(android.graphics.Color.WHITE);
+
+		
 		eye_bar = (VerticalSeekBar) findViewById(R.id.eyeseekbar);
 		eye_bar.setMax(100);
 		eye_bar.setOnSeekBarChangeListener(this);
 		eye_bar.setVisibility(View.INVISIBLE);
 
-		// CameraView declaration 
 		mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.fd_activity_surface_view);
+
 		mOpenCvCameraView.setCvCameraViewListener(this);
 
-		// Database initiation 
+		// For Database
 		myDBHelper = new MyDBHelper(getApplicationContext());
 
 		databaseUtil = new DBUtil();
@@ -260,21 +259,20 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 		currentUser = new User();
 		allUsers = databaseUtil.loadAllUsers();
 
-		// expression initiation
+		// expression
 		userButtons = new ArrayList<ImageButton>();
 		expressionButtons = new ArrayList<ImageButton>();
-		
-		currentExpression = new Expression(0, 0);
-		currentExpression.setDistortionParameter(0.1f);
-		
-		// user's candidates photos loaded as imageButton by method galleryButton.
+		Log.e("test", "test: start create buttons.");
 		galleryButton();
 
-		// initialize getphoto.
+		currentExpression = new Expression(0, 0);
+		currentExpression.setDistortionParameter(0.1f);
+
+		// temp
 		getPhoto = false;
 
 	}
-    
+
 	/**
 	 * gallery button method. The candidate users photos displayed
 	 * as imagebutton loaded on the top of screen for user's selection.
@@ -285,67 +283,53 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	 */
 	public void galleryButton() {
 
-		// add first candidate user view shown as imagebutton
-		RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_layout1);
-		View view = getLayoutInflater().inflate(R.layout.customer1_image,
-		        mainLayout, false);
-		mainLayout.addView(view);
 
 		customer1ImageButton = (ImageButton) findViewById(R.id.customer1imageButton);
-		
-		
-		// add second candidate user view shown as imagebutton.
-		View view2 = getLayoutInflater().inflate(R.layout.customer2_image,
-				mainLayout, false);
-		mainLayout.addView(view2);
+		final Bitmap customer1Image = null;
+		customer1ImageButton.setImageBitmap(customer1Image);
+
 		final ImageButton customer2ImageButton = (ImageButton) findViewById(R.id.customer2imageButton);
-		
-		// add third candidate user view shown as imagebutton.
-		View view3 = getLayoutInflater().inflate(R.layout.customer3_image,
-				mainLayout, false);
-		mainLayout.addView(view3);
+		final Bitmap customer2Image = null;
+		customer2ImageButton.setImageBitmap(customer2Image);
+
 		customer3ImageButton = (ImageButton) findViewById(R.id.customer3imageButton);
+		final Bitmap customer3Image = null;
 		
-		// add new user button.
-		View view4 = getLayoutInflater().inflate(R.layout.add_newuser, 
-				mainLayout, false);
-		mainLayout.addView(view4);
-		addNewUserImageButton = (ImageButton) findViewById(R.id.addNewUser);
-		
-		// candidate user1 button listener. When click, get through into this 
-		// user and load his/her expression into the distortion button.
+		Log.e("test", "test: before listener");
+
 		customer1ImageButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 
 				customer2ImageButton.setVisibility(View.INVISIBLE);
 				customer3ImageButton.setVisibility(View.INVISIBLE);
+				galleryText.setVisibility(View.INVISIBLE);
+				distortionText.setVisibility(View.VISIBLE);
+				
 				
 				if (allUsers != null && allUsers.size() > 0)
 					currentUser = allUsers.get(0);
-				currentUser.setExpressions(databaseUtil
-						.loadAllExpressions(currentUser.getUserID()));
-
+				currentUser.loadAllExpressions(myDBHelper);
+				Log.v(TAG,"before distortionbutton");
+				
 				distortionButton();
-
+				Log.v(TAG,"after distortionbutton");
 			}
 
 		});
-		
-		// candidate user2 button listener. When click, this user photo displayed
-		// on the customerbutton1, and get through into this user database and 
-		// load his/her expression into the distortion button.
+
 		customer2ImageButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 
 				customer2ImageButton.setVisibility(View.INVISIBLE);
 				customer3ImageButton.setVisibility(View.INVISIBLE);
+				galleryText.setVisibility(View.INVISIBLE);
+				distortionText.setVisibility(View.VISIBLE);
 
 				if (allUsers != null && allUsers.size() > 1) {
 					currentUser = allUsers.get(1);
-					currentUser.setExpressions(databaseUtil
-							.loadAllExpressions(currentUser.getUserID()));
+					currentUser.loadAllExpressions(myDBHelper);
 					customer1ImageButton.setImageBitmap(allUsers.get(1)
 							.getBitmapPhoto());
 				} else {
@@ -356,44 +340,24 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 			}
 
 		});
-		
-		// candidate user3 button listener. When click, this user photo displayed
-	    // on the customerbutton1, and get through into this user database and 
-		// load his/her expression into the distortion button.
 		customer3ImageButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 
-				customer2ImageButton.setVisibility(View.INVISIBLE);
-				customer3ImageButton.setVisibility(View.INVISIBLE);
-
-				if (allUsers != null && allUsers.size() > 1) {
-					currentUser = allUsers.get(1);
-					currentUser.setExpressions(databaseUtil
-							.loadAllExpressions(currentUser.getUserID()));
-					customer1ImageButton.setImageBitmap(allUsers.get(1)
-							.getBitmapPhoto());
-				} else {
-					// add new user
-				}
-				distortionButton();
-
-			}
-
-		});
-		
-		// add new user button. When click, set up a new user ID and simultaneously
-		// take a picture as photo of this user, all these info stored into the
-		// database
-		addNewUserImageButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View arg0) {
-
-				
+				/*
+				 * customer2ImageButton.setVisibility(View.INVISIBLE);
+				 * customer3ImageButton.setVisibility(View.INVISIBLE);
+				 * if(allUsers!=null&&allUsers.size()>2) { currentUser =
+				 * allUsers.get(2);
+				 * currentUser.setExpressions(databaseUtil.loadAllExpressions
+				 * (currentUser.getUserID()));
+				 * customer1ImageButton.setImageBitmap
+				 * (allUsers.get(2).getBitmapPhoto()); } else { //add new user }
+				 */
 				currentUser = new User();
-			
+				// currentUser.setUserID(allUsers.size());
 				getPhoto = true;
-				
+				// distortionButton();
 			}
 
 		});
@@ -409,10 +373,16 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 					allUsers.get(i).getBitmapPhoto());
 		}
 
-		
+	
 		Log.e("test", "test: set bitmap");
 	}
 
+	// Distortion Button manipulation
+	
+	private boolean mainlayoutkill;
+	private ImageButton distortion1ImageButton;
+	private ImageButton distortion2ImageButton;
+	
 	/**
 	 * Distortion Button method. Once a user is identified by clicking 
 	 * one of the gallerybutton, the user from data is loaded ant his/her
@@ -426,63 +396,62 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	 * @return
 	 */
 	public void distortionButton() {
+		Log.v(TAG,"start distortionbutton");
+		
 
-		RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_layout1);
-		
-		// add first distortion button.
-		View view = getLayoutInflater().inflate(R.layout.distortion1_image,
-				mainLayout, false);
-		mainLayout.addView(view);
 		distortion1ImageButton = (ImageButton) findViewById(R.id.distortion1imageButton);
+		distortion1ImageButton.setVisibility(View.VISIBLE);
 		
-		// add 2nd distortion button.
-		View view2 = getLayoutInflater().inflate(R.layout.distortion2_image,
-				mainLayout, false);
-		mainLayout.addView(view2);
+		
+		mainlayoutkill = false;
+
 		distortion2ImageButton = (ImageButton) findViewById(R.id.distortion2imageButton);
+		distortion2ImageButton.setVisibility(View.VISIBLE);
 		
-		// distortion1 button listener. By clicking it, the distortion pattern 
-		// will be loaded to the real-time face on the screen and the slide bar
-		// is shown for adjusting the distortion.
+		Log.v(TAG,"middle distortionbutton");
 		distortion1ImageButton.setOnClickListener(new OnClickListener() {
+
+			
 
 			public void onClick(View arg0) {
 
-				RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_layout1);
+				
 
 				distortion1ImageButton.setVisibility(View.INVISIBLE);
 				distortion2ImageButton.setVisibility(View.INVISIBLE);
+				distortionText.setVisibility(View.INVISIBLE);
+				
 				if (currentUser.getExpressions().size() > 0) {
 					currentExpression = currentUser.getExpressions().get(0);
 					// set parameter
 				} else {
 					currentExpression = new Expression(currentUser.getUserID(),
 							currentUser.getExpressions().size());
-
+					currentUser.getExpressions().add(currentExpression);
 				}
 				eye_bar.setVisibility(View.VISIBLE);
 
 			}
 
 		});
-		
-		// distortion2 button listener. By clicking it, the distortion pattern 
-		// will be loaded to the real-time face on the screen and the slide bar
-		// is shown for adjusting the distortion.
+
 		distortion2ImageButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 
-				RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_layout1);
+				
 
 				distortion1ImageButton.setVisibility(View.INVISIBLE);
 				distortion2ImageButton.setVisibility(View.INVISIBLE);
-
+				distortionText.setVisibility(View.INVISIBLE);
+				mainlayoutkill = true;
+				
 				if (currentUser.getExpressions().size() > 1) {
 					currentExpression = currentUser.getExpressions().get(1);
 					// set parameter
 				} else if (currentUser.getExpressions().size() == 1) {
 					currentExpression = new Expression(currentUser.getUserID(),1);
+					currentUser.getExpressions().add(currentExpression);
 				} else {
 					return;
 				}
@@ -490,14 +459,17 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 			}
 
 		});
+		
+		
 		expressionButtons.clear();
 		expressionButtons.add(distortion1ImageButton);
 		expressionButtons.add(distortion2ImageButton);
+		Log.v(TAG,"late distortionbutton");
 		for (int i = 0; i < expressionButtons.size()&&i<currentUser.getExpressions().size(); ++i)
 	    {
 			expressionButtons.get(i).setImageBitmap(currentUser.getExpressions().get(i).getFaceImageBitmap());
 		}
-
+		Log.v(TAG,"end distortionbutton");
 	}
 
 	@Override
@@ -509,6 +481,7 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 			mOpenCvCameraView.disableView();
 		super.onPause();
 	}
+
 	/**
 	 * onResume()
 	 */
@@ -541,7 +514,6 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	}
 
 	private Bitmap bmp = null;
-	
 	/**
 	 * The core fuction of this app.
 	 * The image captured by the camera is the input. Then face detection is applied to this image.
@@ -549,25 +521,22 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	 * If at least one face is detected, it will be distorted. The modified image will be returned.
 	 */
 	public Mat onCameraFrame(Mat inputFrame) {
+
 		inputFrame.copyTo(mRgba);
 
-		// snapshot button and its listener added for taking picture 
-		// and add expression pattern to specific user
-		snapShot = (ImageButton) findViewById(R.id.snapShot);
+		final ImageButton snapShot = (ImageButton) findViewById(R.id.snapShot);
+
 		snapShot.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
-
+				currentExpression.setStoreFlag(true);
 				
-				databaseUtil.addExpression(currentExpression);
 			}
 
 		});
-		
-		//convert color image to gray for face dection.
+
 		Imgproc.cvtColor(inputFrame, mGray, Imgproc.COLOR_RGBA2GRAY);
-		
-		//set minimize face size
+
 		if (mAbsoluteFaceSize == 0) {
 			int height = mGray.rows();
 			if (Math.round(height * mRelativeFaceSize) > 0) {
@@ -577,8 +546,7 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 		}
 
 		MatOfRect faces = new MatOfRect();
-		
-		//choose face detector
+
 		if (mDetectorType == JAVA_DETECTOR) {
 			if (mJavaDetector != null)
 				mJavaDetector.detectMultiScale(mGray, faces, 1.1, 2,
@@ -591,8 +559,7 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 		} else {
 			Log.e(TAG, "Detection method is not selected!");
 		}
-		
-		//check whether there is face in the image.
+
 		Rect[] facesArray = faces.toArray();
 		if (facesArray.length > 0) {
 			Log.v(TAG, "faces");
@@ -603,37 +570,36 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 			Rect detectedFace = facesArray[0];
 			Mat faceRect = mRgba.submat(detectedFace);
 			if (getPhoto) {
-				//if a new user is created, the first detected face will be used as his/her profile image.
 				Mat tempFace = faceRect.clone();
 				currentUser.setProfilePhoto(tempFace);
 				currentUser.setUserID(allUsers.size());
-				
-				databaseUtil.addUser(currentUser);
-				
+				currentUser.add2DB(myDBHelper);
 				currentUser.mat2bitmap();
-				
 				if (currentUser.getBitmapPhoto() != null
 						&& userButtons.get(0) != null) {
-					Log.v(TAG, "get photo3.3 " + userButtons.size());
 					Bitmap bitmapPhoto = Bitmap.createBitmap(tempFace.cols(),
 							tempFace.rows(), Bitmap.Config.ARGB_8888);
 					Utils.matToBitmap(tempFace, bitmapPhoto);
 					try {
 						customer1ImageButton.setImageBitmap(bitmapPhoto);
+						//customer1ImageButton.invalidate();
 					} catch (Exception e) {
 						Log.v("exception", "test: " + e.toString());
 					}
-					
+				}
 				getPhoto = false;
-				
 			}
 			
-			Log.v(TAG, "para" + currentExpression.getDistortionParameter());
-			//apply distortion
 			currentExpression.setFaceImageFromSubmat(faceRect);
 			currentExpression.applyDistortion();
+			if (currentExpression.checkWhetherFaceImageIsReady())
+			{
+				currentExpression.update2DB(myDBHelper);
+				currentExpression.setStoreFlag(false);
+			}
+			
 		}
-		}
+
 		return mRgba;
 	}
 
@@ -672,7 +638,6 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 		}
 		return true;
 	}
-
 	/**
 	 * set minimize face size
 	 */
@@ -680,7 +645,6 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 		mRelativeFaceSize = faceSize;
 		mAbsoluteFaceSize = 0;
 	}
-
 	/**
 	 * set detector
 	 */
@@ -697,7 +661,7 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 			}
 		}
 	}
-    
+
 	/**
 	 * slide bar listener.when the bar being moved, the distortion extent or parameter
 	 * will be changed. The effect will be shown on the real-time face of user.
@@ -710,8 +674,8 @@ public class FdActivity extends Activity implements OnSeekBarChangeListener,
 	public void onProgressChanged(SeekBar seekBar, int progress,
 			boolean fromUser) {
 		// TODO Auto-generated method stub
-		currentExpression.setDistortionParameter(seekBar.getProgress() / 10.0f
-				/ seekBar.getMax());
+		currentExpression.setDistortionParameter(seekBar.getProgress() 
+				/ (float)seekBar.getMax());/// 10.0f
 		String TAG = null;
 		Log.v(TAG, "problemkl1" + progress);
 	}

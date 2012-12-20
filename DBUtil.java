@@ -8,7 +8,6 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.opencv.core.Mat;
 
@@ -70,10 +69,9 @@ public class DBUtil {
 			}
 			cur.close();
 			db.close();
-			Log.e("Database.LoadUser","User count :"+cur.getCount()+" userList:"+allUsers.size());
-		}catch(Exception ex){
+			}catch(Exception ex){
 			
-			Log.e("DatabaseHandler.getCategoryJoke","yyyyy"+ex.getMessage()+ex.getLocalizedMessage()+ex.getCause());
+			Log.e("DatabaseHandler.getCategoryJoke","exception: "+ex.getMessage()+ex.getLocalizedMessage()+ex.getCause());
 		}
         
         return allUsers;
@@ -92,7 +90,6 @@ public class DBUtil {
         String[] columns = {"UserID","ExpressionID","Factor","Photo","Width","Height"};
         try{
 			Cursor cur = db.query("Expression",columns,"UserID="+userID,null,null,null,null);
-			//Log.v(LOGTAG2, "count of gallery: " + cur.getCount() + ":" + cur.getColumnCount());
 			cur.moveToFirst();
 			for(int i=0;i<cur.getCount();i++){
 				Expression tempExpression = new Expression(userID, cur.getInt(1));
@@ -110,9 +107,8 @@ public class DBUtil {
 			}
 			cur.close();
 			db.close();
-			Log.e("Database.AddUser","Expression count:"+cur.getCount()+" userList:"+allExpressions.size());
-		}catch(Exception ex){
-			Log.e("DatabaseHandler.getCategoryJoke",""+ex.getMessage()+ex.getLocalizedMessage()+ex.getCause());
+			}catch(Exception ex){
+			Log.e("DatabaseHandler.getCategoryJoke","exception"+ex.getMessage()+ex.getLocalizedMessage()+ex.getCause());
 		}
 		return allExpressions;
 	}
@@ -145,13 +141,11 @@ public class DBUtil {
 		values.put("Width", user.getBitmapPhoto().getWidth());
 		values.put("Height", user.getBitmapPhoto().getHeight());
 		try{
-        	long rowid = db.insert("User", null, values);
-        	Log.e("success:", "insert "+ rowid);
+        	db.insert("User", null, values);
         }catch(Exception ex){
 			Log.e("Exception: ",""+ex.getMessage());
 		}
         db.close();
-        Log.v("test", "end of add user");
 	}
 	
 	/**
@@ -175,8 +169,7 @@ public class DBUtil {
 		values.put("Height", expression.getFaceImageBitmap().getHeight());
 		values.put("Factor", Double.valueOf((double)expression.getDistortionParameter()));
 		try{
-        	long rowid = db.insert("Expression", null, values);
-        	Log.e("success:", "insert "+ rowid);
+        	db.insert("Expression", null, values);
         }catch(Exception ex){
 			Log.e("Exception: ",""+ex.getMessage());
 		}
@@ -197,7 +190,6 @@ public class DBUtil {
         try{
 			//openDataBase();
         	Cursor cur = db.query("Expression",columns,"UserID="+userID,null,null,null,null);
-			//Log.v(LOGTAG2, "count of gallery: " + cur.getCount() + ":" + cur.getColumnCount());
 			cur.moveToFirst();
 			for(int i=0;i<cur.getCount();i++){
 				if(expression.getExpressionId() == cur.getInt(0))
@@ -205,7 +197,6 @@ public class DBUtil {
 				cur.moveToNext();
 			}
 			cur.close();
-			//db.close();
 		}catch(Exception ex){
 			Log.e("DatabaseHandler.getCategoryJoke",""+ex.getMessage()+ex.getLocalizedMessage()+ex.getCause());
 		}
@@ -218,7 +209,6 @@ public class DBUtil {
         	String strFilter = "UserId=" + expression.getUserId()+" and ExpressionID="+expression.getExpressionId();
         	ContentValues args = new ContentValues();
         	args.put("Factor", expression.getDistortionParameter());
-        	//byte[] outputPhoto = mat2ByteArray(expression.getFaceImage());
         	byte[] outputPhoto = bitmap2ByteArray(expression.getFaceImageBitmap());
     		if (outputPhoto==null)
     			return;
@@ -236,7 +226,7 @@ public class DBUtil {
 	 * @param input
 	 * @return
 	 */
-	private Mat byteArray2Mat(byte[] input)
+	public static Mat byteArray2Mat(byte[] input)
 	{
 		if(input==null)
 			return null;
@@ -250,7 +240,6 @@ public class DBUtil {
 		  in.close();
 		}catch(Exception e)
 		{
-			Log.e("error in byte to mat","yyyy");
 			e.printStackTrace();
 		}
 		return tempPhoto;
@@ -260,13 +249,12 @@ public class DBUtil {
 	 * @param input
 	 * @return
 	 */
-	private byte[] mat2ByteArray(Mat input)
+	public static byte[] mat2ByteArray(Mat input)
 	{
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
 		byte[] outputPhoto = null;
 		try {
-			Log.e("running", "begin convert!");
 		  out = new ObjectOutputStream(bos);
 		  out.writeObject(input);
 		  outputPhoto = bos.toByteArray();
@@ -274,7 +262,6 @@ public class DBUtil {
 		  bos.close();
 		}catch(Exception e)
 		{
-			Log.e("running", "convert :"+e.toString());
 			e.printStackTrace();
 		}
 		return outputPhoto;
@@ -284,7 +271,7 @@ public class DBUtil {
 	 * @param bitmap
 	 * @return
 	 */
-	private byte[] bitmap2ByteArray(Bitmap bitmap)
+	public static byte[] bitmap2ByteArray(Bitmap bitmap)
 	{
 		int bytes = bitmap.getWidth()*bitmap.getHeight()*4; 
     	ByteBuffer buffer = ByteBuffer.allocate(bytes); //Create a new buffer
@@ -299,7 +286,7 @@ public class DBUtil {
 	 * @param height height of the bitmap
 	 * @return converted bitmap
 	 */
-	private Bitmap byteArray2Bitmap(byte[] input, int width, int height)
+	public static Bitmap byteArray2Bitmap(byte[] input, int width, int height)
 	{
 		ByteBuffer temp = ByteBuffer.wrap(input);
 		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
