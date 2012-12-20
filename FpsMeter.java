@@ -9,6 +9,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 
+
+/**
+ * this class set face detector parameter
+ * this is part of face detection example provided by OpenCV.
+ * @author JHU Fall2012 OOSE group 12
+ */
 public class FpsMeter {
     private static final String TAG       = "OCVSample::FpsMeter";
     int                         step;
@@ -19,6 +25,9 @@ public class FpsMeter {
     DecimalFormat               twoPlaces = new DecimalFormat("0.00");
     Paint                       paint;
 
+    /**
+     * initialize face detector
+     */
     public void init() {
         step = 20;
         framesCouner = 0;
@@ -31,6 +40,9 @@ public class FpsMeter {
         paint.setTextSize(50);
     }
 
+    /**
+     * measure face number
+     */
     public void measure() {
         framesCouner++;
         if (framesCouner % step == 0) {
@@ -43,6 +55,9 @@ public class FpsMeter {
         }
     }
 
+    /**
+     * show some information on the sreen
+     */
     public void draw(Canvas canvas, float offsetx, float offsety) {
         canvas.drawText(strfps, 20 + offsetx, 10 + 50 + offsety, paint);
     }
